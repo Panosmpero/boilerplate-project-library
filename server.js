@@ -1,14 +1,30 @@
 'use strict';
 
-var express     = require('express');
-var bodyParser  = require('body-parser');
-var cors        = require('cors');
+const express     = require('express');
+const bodyParser  = require('body-parser');
+const cors        = require('cors');
+const helmet      = require("helmet");
+const noCache     = require("nocache");
+const dotenv      = require("dotenv").config();
+const mongoose    = require("mongoose");
 
-var apiRoutes         = require('./routes/api.js');
-var fccTestingRoutes  = require('./routes/fcctesting.js');
-var runner            = require('./test-runner');
+const apiRoutes         = require('./routes/api.js');
+const fccTestingRoutes  = require('./routes/fcctesting.js');
+const runner            = require('./test-runner');
 
-var app = express();
+mongoose.connect(process.env.MONGOOSE_URI, { 
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true
+   }, (error) => {
+  if (error) console.log("Failed to connect to DB: " + error);
+  console.log("Connected to DB.")
+});
+
+const app = express();
+
+app.use(noCache());
+app.use(helmet.hidePoweredBy({ setTo: "PHP 4.2.0" }));
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
@@ -45,7 +61,7 @@ app.listen(process.env.PORT || 3000, function () {
       try {
         runner.run();
       } catch(e) {
-        var error = e;
+        const error = e;
           console.log('Tests are not valid:');
           console.log(error);
       }
